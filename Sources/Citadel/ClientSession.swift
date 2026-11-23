@@ -108,6 +108,9 @@ public struct SSHClientSettings: Sendable {
     public var group: EventLoopGroup = MultiThreadedEventLoopGroup.singleton
     internal var channelHandlers: [ChannelHandler & Sendable] = []
     public var connectTimeout: TimeAmount = .seconds(30)
+    /// Time allowed from adding the SSH handlers until the user is authenticated: the server's version line, key exchange
+    /// and login. Some servers spend seconds on a reverse DNS lookup of the client before sending their version line.
+    public var loginTimeout: TimeAmount = .seconds(10)
 
     public init(
         host: String,
@@ -169,7 +172,7 @@ final class SSHClientSession: Sendable {
     ) -> EventLoopFuture<Void> {
         let handshakeHandler = ClientHandshakeHandler(
             eventLoop: channel.eventLoop,
-            loginTimeout: .seconds(10)
+            loginTimeout: settings.loginTimeout
         )
         var clientConfiguration = SSHClientConfiguration(
             userAuthDelegate: settings.authenticationMethod(),
